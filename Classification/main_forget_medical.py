@@ -192,14 +192,14 @@ def main():
     UBAC = 1 - results["forget"]["bac"]
     print(f"UBAC (Unlearning Accuracy): {UBAC:.2f}%")
 
-    # RA = evaluation_result["accuracy"]["retain"]
+    # RA = evaluation_result["saccuracy"]["retain"]
     #RBAC = evaluation_result["bac"]["retain"]
     RBAC = results["retain"]["bac"]
     print(f"RBAC (Remaining Accuracy): {RBAC:.2f}%")
 
     # TA = evaluation_result["accuracy"]["test"]
     # TBAC = evaluation_result["bac"]["test"]
-    TBAC = evaluation_result["test"]["bac"]
+    TBAC = results["test"]["bac"]
     print(f"TBAC (Testing Accuracy): {TBAC:.2f}%")
 
     for deprecated in ["MIA", "SVC_MIA", "SVC_MIA_forget"]:
