@@ -171,25 +171,36 @@ def main():
             # val_acc = validate(loader, model, criterion, args)
             metrics = validate_medical(loader, model, criterion, args)
             # accuracy[name] = val_acc
-            results[name] = metrics['bac']
+            results[name] = metrics
             #print(f"{name} acc: {val_acc}")
             print(f"{name} bac: {metrics['bac']}")
 
         # evaluation_result["accuracy"] = accuracy
-        evaluation_result["bac"] = results
+        # evaluation_result["bac"] = results
         unlearn.save_unlearn_checkpoint(model, evaluation_result, args)
 
+    print("==== Test metrics (best checkpoint) ====")
+    test_metrics = results["test"]
+    for k in sorted(test_metrics.keys()):
+        try:
+            print(f"{k}: {float(test_metrics[k]):.6f}")
+        except Exception:
+            print(f"{k}: {test_metrics[k]}")
+    
     #UA = 100 - evaluation_result["accuracy"]["forget"]
-    UBAC = 100 - evaluation_result["bac"]["forget"]
-    print(f"UA (Unlearning Accuracy): {UBAC:.2f}%")
+    #UBAC = 1 - evaluation_result["bac"]["forget"]
+    UBAC = 1 - results["forget"]["bac"]
+    print(f"UBAC (Unlearning Accuracy): {UBAC:.2f}%")
 
     # RA = evaluation_result["accuracy"]["retain"]
-    RBAC = evaluation_result["bac"]["retain"]
-    print(f"RA (Remaining Accuracy): {RBAC:.2f}%")
+    #RBAC = evaluation_result["bac"]["retain"]
+    RBAC = results["retain"]["bac"]
+    print(f"RBAC (Remaining Accuracy): {RBAC:.2f}%")
 
     # TA = evaluation_result["accuracy"]["test"]
-    TBAC = evaluation_result["bac"]["test"]
-    print(f"TA (Testing Accuracy): {TBAC:.2f}%")
+    # TBAC = evaluation_result["bac"]["test"]
+    TBAC = evaluation_result["test"]["bac"]
+    print(f"TBAC (Testing Accuracy): {TBAC:.2f}%")
 
     for deprecated in ["MIA", "SVC_MIA", "SVC_MIA_forget"]:
         if deprecated in evaluation_result:
