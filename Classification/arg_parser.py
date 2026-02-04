@@ -142,6 +142,12 @@ def parse_args():
     parser.add_argument("--alpha", default=0.2, type=float, help="unlearn noise")
     parser.add_argument("--mask_path", default=None, type=str, help="the path of saliency map")
 
+    parser.add_argument(
+        "--removal_mode", type=str, default="random", choices=["random", "balanced", "skewed"], help='removal mode'
+    )
+
+    parser.add_argument("--skew_malignant_frac", default=0.7, type=float, help="skew_malignant_frac noise") #just for skewed removal mode
+
     ### Aug setting
     parser.add_argument('--aug_mode', type=str, default='crop-flip', choices=['crop-flip','crop-flip-randaug', "crop-flip-autoaug", "crop-flip-rerase", "crop-flip-trivial", "crop-flip-augmix"], help='mode for augmentation')
 

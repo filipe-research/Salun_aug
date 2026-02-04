@@ -20,6 +20,113 @@ from torchvision.transforms import TrivialAugmentWide
 from tqdm import tqdm
 from medmnist import BloodMNIST, PathMNIST, OrganAMNIST, OCTMNIST, DermaMNIST
 
+def _get_label_array(dataset: torch.utils.data.Dataset):
+    """Return the label array reference and a string key indicating where labels live."""
+    if hasattr(dataset, "targets"):
+        return dataset.targets, "targets"
+    if hasattr(dataset, "labels"):
+        return dataset.labels, "labels"
+    if hasattr(dataset, "_labels"):
+        return dataset._labels, "_labels"
+    raise AttributeError("Dataset has no targets/labels/_labels")
+
+
+def mark_indexes_only(dataset: torch.utils.data.Dataset, indexes):
+    """Mark samples by flipping labels to negative (same convention used by replace_indexes(only_mark=True))."""
+    labels, key = _get_label_array(dataset)
+    labels = np.array(labels)
+    labels[indexes] = -labels[indexes] - 1
+    # write back preserving attribute
+    if key == "targets":
+        dataset.targets = labels
+    elif key == "labels":
+        dataset.labels = labels
+    else:
+        dataset._labels = labels
+
+
+def select_removal_indexes_binary(labels: np.ndarray, total_to_remove: int, mode: str = "random",
+                                 skew_malignant_frac: float = 0.7, seed: int = 0):
+    """Select indexes to remove/mark for a binary dataset (labels in {0,1}).
+
+    mode:
+      - "random": uniform over all samples
+      - "balanced": remove the same fraction from each class
+      - "skewed": remove `skew_malignant_frac` of removals from malignant (label=1)
+
+    Returns: numpy array of indexes.
+    """
+    rng = np.random.RandomState(seed)
+    labels = labels.astype(np.int64)
+    n = len(labels)
+    total_to_remove = int(total_to_remove)
+    total_to_remove = max(0, min(total_to_remove, n))
+
+    if total_to_remove == 0:
+        return np.array([], dtype=np.int64)
+
+    all_idx = np.arange(n, dtype=np.int64)
+
+    if mode == "random":
+        return rng.choice(all_idx, size=total_to_remove, replace=False)
+
+    idx_mal = np.flatnonzero(labels == 1) #Assume que a maligna é a classe 1 - correto
+    idx_ben = np.flatnonzero(labels == 0)
+    n_mal = len(idx_mal)
+    n_ben = len(idx_ben)
+
+    if n_mal == 0 or n_ben == 0:
+        # fallback
+        return rng.choice(all_idx, size=total_to_remove, replace=False)
+
+    if mode == "balanced":
+        # same fraction r from each class
+        r = total_to_remove / float(n)
+        rm_mal = int(round(r * n_mal))
+        rm_ben = int(round(r * n_ben))
+        # adjust to match total exactly
+        delta = total_to_remove - (rm_mal + rm_ben)
+        if delta > 0:
+            # add to the class with more remaining capacity
+            for _ in range(delta):
+                if (rm_mal < n_mal) and (rm_ben >= n_ben or (n_mal - rm_mal) >= (n_ben - rm_ben)):
+                    rm_mal += 1
+                elif rm_ben < n_ben:
+                    rm_ben += 1
+        elif delta < 0:
+            for _ in range(-delta):
+                if rm_mal > 0 and (rm_ben == 0 or rm_mal >= rm_ben):
+                    rm_mal -= 1
+                elif rm_ben > 0:
+                    rm_ben -= 1
+
+    elif mode == "skewed":
+        skew_malignant_frac = float(skew_malignant_frac)
+        skew_malignant_frac = min(max(skew_malignant_frac, 0.0), 1.0)
+        rm_mal = int(round(skew_malignant_frac * total_to_remove))
+        rm_ben = total_to_remove - rm_mal
+        # clip to available counts and re-adjust
+        rm_mal = min(rm_mal, n_mal)
+        rm_ben = min(rm_ben, n_ben)
+        cur = rm_mal + rm_ben
+        if cur < total_to_remove:
+            # fill remaining from whichever class still has capacity
+            remaining = total_to_remove - cur
+            cap_mal = n_mal - rm_mal
+            cap_ben = n_ben - rm_ben
+            add_mal = min(remaining, cap_mal)
+            rm_mal += add_mal
+            remaining -= add_mal
+            if remaining > 0:
+                rm_ben += min(remaining, cap_ben)
+
+    else:
+        raise ValueError(f"Unknown removal mode: {mode}")
+
+    sel_mal = rng.choice(idx_mal, size=rm_mal, replace=False) if rm_mal > 0 else np.array([], dtype=np.int64)
+    sel_ben = rng.choice(idx_ben, size=rm_ben, replace=False) if rm_ben > 0 else np.array([], dtype=np.int64)
+    return np.concatenate([sel_mal, sel_ben]).astype(np.int64)
+
 
 def cifar10_dataloaders_no_val(
     batch_size=128, data_dir="datasets/cifar10", num_workers=2
@@ -1007,7 +1114,9 @@ def dermamnist_bin_dataloaders(
     no_aug=False,
     aug_mode=None,
     im_size=64,
-    dataset=None
+    dataset=None,
+    removal_mode: str = "random",  # random | balanced | skewed
+    skew_malignant_frac: float = 0.7,
 ):
     if no_aug:
         train_transform = transforms.Compose(
@@ -1164,13 +1273,39 @@ def dermamnist_bin_dataloaders(
     
     if class_to_replace is not None:
         
-        replace_class(
-            train_set,
-            class_to_replace,
-            num_indexes_to_replace=num_indexes_to_replace,
-            seed=seed - 1,
-            only_mark=only_mark,
-        )
+        # replace_class(
+        #     train_set,
+        #     class_to_replace,
+        #     num_indexes_to_replace=num_indexes_to_replace,
+        #     seed=seed - 1,
+        #     only_mark=only_mark,
+        # )
+        # For MU experiments we typically mark samples (only_mark=True) instead of replacing.
+        # When class_to_replace == -1, the original code marks a random subset of the whole train set.
+        # Here we support class-balanced and skewed removal policies for the binary task.
+        if class_to_replace == -1 and only_mark and num_indexes_to_replace is not None:
+            labels_arr = np.array(train_set.labels).astype(np.int64)
+            idx_to_mark = select_removal_indexes_binary(
+                labels=labels_arr,
+                total_to_remove=int(num_indexes_to_replace),
+                mode=str(removal_mode),
+                skew_malignant_frac=float(skew_malignant_frac),
+                seed=int(seed - 1),
+            )
+            print(
+                f"[Removal] mode={removal_mode} total={len(idx_to_mark)} "
+                f"(mal={int((labels_arr[idx_to_mark]==1).sum())}, ben={int((labels_arr[idx_to_mark]==0).sum())})"
+            )
+            mark_indexes_only(train_set, idx_to_mark)
+        else:
+            # Fallback to original behavior (replace or mark a specific class)
+            replace_class(
+                train_set,
+                class_to_replace,
+                num_indexes_to_replace=num_indexes_to_replace,
+                seed=seed - 1,
+                only_mark=only_mark,
+            )
         #if num_indexes_to_replace is None or num_indexes_to_replace == 4500:
         if num_indexes_to_replace is None :
             #test_set.data = test_set.data[test_set.targets != class_to_replace]

@@ -215,7 +215,9 @@ def setup_model_dataset(args):
             shuffle=True,
             no_aug=args.no_aug,
             aug_mode=args.aug_mode,
-            dataset=args.dataset
+            dataset=args.dataset,
+            removal_mode=args.removal_mode,
+            skew_malignant_frac= args.skew_malignant_frac,
         )
 
         if args.train_seed is None:
