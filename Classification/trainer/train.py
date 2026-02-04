@@ -4,7 +4,34 @@ import time
 
 import torch
 import utils
+import torch.nn.functional as F
 from imagenet import get_x_y_from_data_dict
+
+def _get_class_weights_tensor(args, device):
+    """Parse args.class_weights into a float tensor on the given device.
+
+    Accepts:
+      - list/tuple of numbers
+      - string like "0.2,0.8" or "[0.2, 0.8]"
+    Returns None if not provided.
+    """
+    if not hasattr(args, "class_weights") or args.class_weights is None:
+        return None
+    w = args.class_weights
+    if isinstance(w, (list, tuple)):
+        vals = [float(x) for x in w]
+    else:
+        s = str(w).strip()
+        s = s.replace("[", "").replace("]", "")
+        parts = [p.strip() for p in s.split(",") if p.strip()]
+        if len(parts) == 0:
+            return None
+        vals = [float(p) for p in parts]
+    if len(vals) < 2:
+        # Binary CE expects at least 2 class weights
+        return None
+    return torch.tensor(vals, dtype=torch.float32, device=device)
+
 
 
 def l1_regularization(model):
@@ -50,6 +77,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args, mask=None, l1=
             output_clean = model(image)
 
             loss = criterion(output_clean, target)
+
             if l1:
                 loss = loss + args.alpha * l1_regularization(model)
             optimizer.zero_grad()
@@ -95,7 +123,17 @@ def train(train_loader, model, criterion, optimizer, epoch, args, mask=None, l1=
             # compute output
             output_clean = model(image)
 
-            loss = criterion(output_clean, target)
+            # loss = criterion(output_clean, target) #old code
+            
+            #[filipe] weighted loss for medical datasets
+            cw = _get_class_weights_tensor(args, output_clean.device)
+            if cw is not None:
+                # Class-weighted CE (binary: [w_benign, w_malignant])
+                loss = F.cross_entropy(output_clean, target, weight=cw)
+            else:
+                loss = criterion(output_clean, target)
+
+            #end[filipe]
             if l1:
                 loss = loss + args.alpha * l1_regularization(model)
             optimizer.zero_grad()
