@@ -48,7 +48,7 @@ def main():
         )
 
     forget_dataset = copy.deepcopy(marked_loader.dataset)
-    import pdb; pdb.set_trace()
+    
     if args.dataset == "svhn":
         try:
             marked = forget_dataset.targets < 0
