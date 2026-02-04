@@ -48,7 +48,6 @@ def main():
         )
 
     forget_dataset = copy.deepcopy(marked_loader.dataset)
-    
     if args.dataset == "svhn":
         try:
             marked = forget_dataset.targets < 0
@@ -141,6 +140,7 @@ def main():
     )
 
     criterion = nn.CrossEntropyLoss()
+
     evaluation_result = None
 
     if args.resume:
@@ -149,15 +149,19 @@ def main():
     if args.resume and checkpoint is not None:
         model, evaluation_result = checkpoint
     else:
+
         checkpoint = torch.load(args.model_path, map_location=device)
         if "state_dict" in checkpoint.keys():
             checkpoint = checkpoint["state_dict"]
+
+        if args.mask_path:
+            mask = torch.load(args.mask_path)
 
         if args.unlearn != "retrain":
             model.load_state_dict(checkpoint, strict=False)
 
         unlearn_method = unlearn.get_unlearn_method(args.unlearn)
-        unlearn_method(unlearn_data_loaders, model, criterion, args)
+        unlearn_method(unlearn_data_loaders, model, criterion, args, mask)
         unlearn.save_unlearn_checkpoint(model, None, args)
 
     if evaluation_result is None:
