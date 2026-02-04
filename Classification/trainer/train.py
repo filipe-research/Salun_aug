@@ -127,8 +127,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args, mask=None, l1=
 
             #[filipe] weighted loss for medical datasets
             cw = _get_class_weights_tensor(args, output_clean.device)
+            import pdb; pdb.set_trace()
             if cw is not None:
-                import pdb; pdb.set_trace()
+                
                 # Class-weighted CE (binary: [w_benign, w_malignant])
                 loss = F.cross_entropy(output_clean, target, weight=cw)
             else:
