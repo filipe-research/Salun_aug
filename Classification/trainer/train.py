@@ -7,30 +7,43 @@ import utils
 import torch.nn.functional as F
 from imagenet import get_x_y_from_data_dict
 
-def _get_class_weights_tensor(args, device):
-    """Parse args.class_weights into a float tensor on the given device.
+def _infer_class_weights_from_train_loader(train_loader, device):
+    """Infer class weights from the dataset behind the loader.
 
-    Accepts:
-      - list/tuple of numbers
-      - string like "0.2,0.8" or "[0.2, 0.8]"
-    Returns None if not provided.
+    Assumes binary labels {0,1}. Ignores marked samples with negative labels.
+    Returns a tensor [w0, w1] on `device`, or None if it cannot infer.
     """
-    if not hasattr(args, "class_weights") or args.class_weights is None:
+    ds = getattr(train_loader, "dataset", None)
+    if ds is None:
         return None
-    w = args.class_weights
-    if isinstance(w, (list, tuple)):
-        vals = [float(x) for x in w]
-    else:
-        s = str(w).strip()
-        s = s.replace("[", "").replace("]", "")
-        parts = [p.strip() for p in s.split(",") if p.strip()]
-        if len(parts) == 0:
-            return None
-        vals = [float(p) for p in parts]
-    if len(vals) < 2:
-        # Binary CE expects at least 2 class weights
+
+    labels = None
+    if hasattr(ds, "labels"):
+        labels = ds.labels
+    elif hasattr(ds, "targets"):
+        labels = ds.targets
+    elif hasattr(ds, "_labels"):
+        labels = ds._labels
+
+    if labels is None:
         return None
-    return torch.tensor(vals, dtype=torch.float32, device=device)
+
+    labels = torch.as_tensor(labels).long().view(-1)
+    # ignore marked/removed samples
+    labels = labels[labels >= 0]
+    if labels.numel() == 0:
+        return None
+
+    n0 = int((labels == 0).sum().item())
+    n1 = int((labels == 1).sum().item())
+    n = n0 + n1
+    if n0 == 0 or n1 == 0:
+        return None
+
+    # Balanced CE weights: N/(2*Nc)
+    w0 = n / (2.0 * n0)
+    w1 = n / (2.0 * n1)
+    return torch.tensor([w0, w1], dtype=torch.float32, device=device)
 
 
 
@@ -111,6 +124,14 @@ def train(train_loader, model, criterion, optimizer, epoch, args, mask=None, l1=
 
         print("train_accuracy {top1.avg:.3f}".format(top1=top1))
     else:
+
+        #code filipe
+        
+        cw = _infer_class_weights_from_train_loader(train_loader, torch.device("cuda"))
+        if cw is not None:
+            print(f"[AutoClassWeights] Using inferred CE weights: {cw.detach().cpu().tolist()}")
+
+        #enc code filipe
         for i, (image, target) in enumerate(train_loader):
             if epoch < args.warmup:
                 utils.warmup_lr(
@@ -125,11 +146,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args, mask=None, l1=
 
             # loss = criterion(output_clean, target) #old code
 
-            #[filipe] weighted loss for medical datasets
-            cw = _get_class_weights_tensor(args, output_clean.device)
-            import pdb; pdb.set_trace()
+            #[filipe] weighted loss for medical datasets            
             if cw is not None:
-                
                 # Class-weighted CE (binary: [w_benign, w_malignant])
                 loss = F.cross_entropy(output_clean, target, weight=cw)
             else:
