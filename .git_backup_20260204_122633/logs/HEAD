@@ -1,0 +1,56 @@
+0000000000000000000000000000000000000000 441ac2ba7a9115b7b583064f818e4eddcefa9be0 filiperobotic <filipe.rolim@gmail.com> 1733423369 -0300	clone: from https://github.com/filipe-research/Salun_aug.git
+441ac2ba7a9115b7b583064f818e4eddcefa9be0 a8f56b9808bca3c38c777caf0deff047f896607c filiperobotic <filipe.rolim@gmail.com> 1733423478 -0300	commit: comment
+a8f56b9808bca3c38c777caf0deff047f896607c 35a5c613c0766aff4fd52689e7ceda3e9fd56131 filiperobotic <filipe.rolim@gmail.com> 1733423697 -0300	commit: removed init
+35a5c613c0766aff4fd52689e7ceda3e9fd56131 fcdd3cf165f539a5406984ca3c673b9d49151fdd filiperobotic <filipe.rolim@gmail.com> 1733426842 -0300	commit: updated acc
+fcdd3cf165f539a5406984ca3c673b9d49151fdd f8223d8423c538e52ebc7fc3d7310fe44781c363 filiperobotic <filipe.rolim@gmail.com> 1733431540 -0300	commit: added noaug
+f8223d8423c538e52ebc7fc3d7310fe44781c363 8090fdbb071e9a3a2849f3fb7fc3129908bb411d filiperobotic <filipe.rolim@gmail.com> 1733432485 -0300	commit: noaug cifar100
+8090fdbb071e9a3a2849f3fb7fc3129908bb411d f863228cbaefdcc4294c23eb0b47ce77c2cead1a filiperobotic <filipe.rolim@gmail.com> 1733487616 -0300	commit: added raug
+f863228cbaefdcc4294c23eb0b47ce77c2cead1a 5a1add60896c98aa43ab0dc32e8e997d5a30f4eb filiperobotic <filipe.rolim@gmail.com> 1733487892 -0300	commit: debug aug
+5a1add60896c98aa43ab0dc32e8e997d5a30f4eb 0b8b36e6d7cbf2f2454df382a13cf613d390b881 filiperobotic <filipe.rolim@gmail.com> 1733488081 -0300	commit: debug aug2
+0b8b36e6d7cbf2f2454df382a13cf613d390b881 cdbdac43e7802471925b5eae744aefb076076a88 filiperobotic <filipe.rolim@gmail.com> 1733769401 -0300	commit: augmode for unlearn
+cdbdac43e7802471925b5eae744aefb076076a88 5447c49a870f3a55715811bf0f9c4814aaaaf4d1 filiperobotic <filipe.rolim@gmail.com> 1733854372 -0300	commit: debug metric
+5447c49a870f3a55715811bf0f9c4814aaaaf4d1 e8e797453e89c15e825e6712074b58874f717a2b filiperobotic <filipe.rolim@gmail.com> 1733858777 -0300	commit: added metric
+e8e797453e89c15e825e6712074b58874f717a2b 42fb86aac58c073a49ae56e2b84eca08f6e2bb3c filiperobotic <filipe.rolim@gmail.com> 1736358683 -0300	commit: initial tests with medmnist
+42fb86aac58c073a49ae56e2b84eca08f6e2bb3c c1cca0e2af22533fc6c4206de858e8bc82c3112b filiperobotic <filipe.rolim@gmail.com> 1736361412 -0300	commit: debug
+c1cca0e2af22533fc6c4206de858e8bc82c3112b 2d7598d3a88a0edfc3aca91473cb4c5dea8b8f93 filiperobotic <filipe.rolim@gmail.com> 1736361990 -0300	commit: download bug
+2d7598d3a88a0edfc3aca91473cb4c5dea8b8f93 b6b7c7e57d8954a57c8c5c84dedbdd13feed4fb5 filiperobotic <filipe.rolim@gmail.com> 1736363026 -0300	commit: debug blood
+b6b7c7e57d8954a57c8c5c84dedbdd13feed4fb5 17df468f2189c2a98df87daf44d141d2ca6346b8 filiperobotic <filipe.rolim@gmail.com> 1736363150 -0300	commit: debug
+17df468f2189c2a98df87daf44d141d2ca6346b8 d121a3c35b3dd50da6a4dd747b39d8a80eea4736 filiperobotic <filipe.rolim@gmail.com> 1736363399 -0300	commit: squeeze
+d121a3c35b3dd50da6a4dd747b39d8a80eea4736 b9190004921a05f83d386d6cf1c94a434cb6eb0a filiperobotic <filipe.rolim@gmail.com> 1736364509 -0300	commit: generate mask
+b9190004921a05f83d386d6cf1c94a434cb6eb0a 87150c9109a59a6e962cb1aae02e796047ad45af filiperobotic <filipe.rolim@gmail.com> 1736364558 -0300	commit: dbg
+87150c9109a59a6e962cb1aae02e796047ad45af b1bcd8007c079abb82e198c6ed0d52cb7bc2daa0 filiperobotic <filipe.rolim@gmail.com> 1736364889 -0300	commit: dbg
+b1bcd8007c079abb82e198c6ed0d52cb7bc2daa0 9b097da2980b924181c51d248227039bcea8c3cc filiperobotic <filipe.rolim@gmail.com> 1736365353 -0300	commit: debug
+9b097da2980b924181c51d248227039bcea8c3cc 78cc4a73a3d89241490aecd7ea9ba60507a8f00a filiperobotic <filipe.rolim@gmail.com> 1736365599 -0300	commit: dbg
+78cc4a73a3d89241490aecd7ea9ba60507a8f00a 72dd3792728dad0e78f211d9d06965f02fd16698 filiperobotic <filipe.rolim@gmail.com> 1736366343 -0300	commit: dbg
+72dd3792728dad0e78f211d9d06965f02fd16698 63d21fe1784f6e7e232c3207d8bb691d1ff1c9eb filiperobotic <filipe.rolim@gmail.com> 1736366563 -0300	commit: debug
+63d21fe1784f6e7e232c3207d8bb691d1ff1c9eb 519d85f6c86c07bcf77c27932e0df1d81890992f filiperobotic <filipe.rolim@gmail.com> 1736366996 -0300	commit: int32
+519d85f6c86c07bcf77c27932e0df1d81890992f df459a7374cd42f37aabafff73b5e51ff487e769 filiperobotic <filipe.rolim@gmail.com> 1736367059 -0300	commit: debug
+df459a7374cd42f37aabafff73b5e51ff487e769 4b029d8d7d0fb3c977b07da1eebafd5c1c5aec76 filiperobotic <filipe.rolim@gmail.com> 1736368417 -0300	commit: dbg
+4b029d8d7d0fb3c977b07da1eebafd5c1c5aec76 d5f468d7fba5104694b6cd3ec5f305859ec2cedb filiperobotic <filipe.rolim@gmail.com> 1736368826 -0300	commit: dbg
+d5f468d7fba5104694b6cd3ec5f305859ec2cedb 113cd02e123f5f455a70c8acc308aa66570b5a4c filiperobotic <filipe.rolim@gmail.com> 1736368874 -0300	commit: dbg
+113cd02e123f5f455a70c8acc308aa66570b5a4c 2eae68ddcf44d1da9dd805c0aec05f25bcfc5634 filiperobotic <filipe.rolim@gmail.com> 1736368988 -0300	commit: dbg
+2eae68ddcf44d1da9dd805c0aec05f25bcfc5634 6ec6f5e363459b1b6eb7d10169bad3f6c50ad98e filiperobotic <filipe.rolim@gmail.com> 1736369048 -0300	commit: dbg
+6ec6f5e363459b1b6eb7d10169bad3f6c50ad98e e4350c9dbf7eb0097eaec4b166738645e55c98ef filiperobotic <filipe.rolim@gmail.com> 1736369072 -0300	commit: db
+e4350c9dbf7eb0097eaec4b166738645e55c98ef 333453543121812769548785f1ee8a7c2fd8dee7 filiperobotic <filipe.rolim@gmail.com> 1736369117 -0300	commit: db
+333453543121812769548785f1ee8a7c2fd8dee7 0867b97fee22bf50d6ae7741a3ce9850f66cf4a0 filiperobotic <filipe.rolim@gmail.com> 1736369317 -0300	commit: salun
+0867b97fee22bf50d6ae7741a3ce9850f66cf4a0 8522c251ea5ee033a424eeb30710c48d57d9acd3 filiperobotic <filipe.rolim@gmail.com> 1736371515 -0300	commit: dataset
+8522c251ea5ee033a424eeb30710c48d57d9acd3 24f767d80db1c503debddd5bc4930141fff1dead filiperobotic <filipe.rolim@gmail.com> 1736371644 -0300	commit: dataset
+24f767d80db1c503debddd5bc4930141fff1dead 61a61b8d3c4e830e84badfecd2bcf4cf4ada5cfc filiperobotic <filipe.rolim@gmail.com> 1736435788 -0300	commit: added medmnist
+61a61b8d3c4e830e84badfecd2bcf4cf4ada5cfc fbcd7af7d8b4a4c86cb9e30e008961ba0f6c76d9 filiperobotic <filipe.rolim@gmail.com> 1736435839 -0300	commit: debug
+fbcd7af7d8b4a4c86cb9e30e008961ba0f6c76d9 58058e8fd2e323f405b132b747255f0b0524ed2f filiperobotic <filipe.rolim@gmail.com> 1736443413 -0300	commit: num_classes
+58058e8fd2e323f405b132b747255f0b0524ed2f cf402137d3bf4108d88e41e5a35e0576e1fcdc75 filiperobotic <filipe.rolim@gmail.com> 1737141551 -0300	commit: new augmentations
+cf402137d3bf4108d88e41e5a35e0576e1fcdc75 e3ea3b580b25420b152bb0d8f64abf219c409420 filiperobotic <filipe.rolim@gmail.com> 1737141710 -0300	commit: added args
+e3ea3b580b25420b152bb0d8f64abf219c409420 cc43a962c3d4b989bbe1f7d2b12b72f7c1a8e21f filiperobotic <filipe.rolim@gmail.com> 1737381361 -0300	commit: aug cifar100
+cc43a962c3d4b989bbe1f7d2b12b72f7c1a8e21f 1f0a6abaf7aff6eb4dd0dc6e915a482f49a99d05 filiperobotic <filipe.rolim@gmail.com> 1737574777 -0300	commit: updated retrain
+1f0a6abaf7aff6eb4dd0dc6e915a482f49a99d05 b13797d8c26b07bb2b55d572a5ed65cb4117b702 filiperobotic <filipe.rolim@gmail.com> 1739907464 -0300	commit: updated svc mia
+b13797d8c26b07bb2b55d572a5ed65cb4117b702 cf67e76cfddb4e7940b5d27f57a6e1177fa713c1 filiperobotic <filipe.rolim@gmail.com> 1739907769 -0300	commit: updated len
+cf67e76cfddb4e7940b5d27f57a6e1177fa713c1 0c87b4dedef99b0033edeffe4ca2ea36129eab6b filiperobotic <filipe.rolim@gmail.com> 1739908082 -0300	commit: min
+0c87b4dedef99b0033edeffe4ca2ea36129eab6b 3adc797e03ef4f9ad149b96504af6bb9b08bbf0e filiperobotic <filipe.rolim@gmail.com> 1744464528 -0300	commit: update on main_forget
+3adc797e03ef4f9ad149b96504af6bb9b08bbf0e 56f262280b316427817c9b69dfcf5f01090bf3eb filiperobotic <filipe.rolim@gmail.com> 1747415196 -0300	commit: txt
+56f262280b316427817c9b69dfcf5f01090bf3eb 4e2c4fcbb44507fcf385a48499d95176cd23a73e filiperobotic <filipe.rolim@gmail.com> 1747415513 -0300	commit: updated augs
+4e2c4fcbb44507fcf385a48499d95176cd23a73e 9d270d032c48575a0b93100d8c3e2c903365bc76 filiperobotic <filipe.rolim@gmail.com> 1747478399 -0300	commit: txt
+9d270d032c48575a0b93100d8c3e2c903365bc76 c50bdde84e2149076e1aea717f0857a6c894bf32 filiperobotic <filipe.rolim@gmail.com> 1747575695 -0300	commit: txt
+c50bdde84e2149076e1aea717f0857a6c894bf32 0f106debc49427a69eb72edc525ca1157696d8ef filiperobotic <filipe.rolim@gmail.com> 1748031179 -0300	commit: ok
+0f106debc49427a69eb72edc525ca1157696d8ef 20077be9d9494efd7b1a73c7dbfbcfeff13c1f65 filiperobotic <filipe.rolim@gmail.com> 1770126266 -0300	commit: ewrewrew
+0000000000000000000000000000000000000000 a291e36f837ecdad98b9ecd4de5b71a2099b0073 filiperobotic <filipe.rolim@gmail.com> 1770218684 -0300	commit (initial): ewrwrewwerewr
+a291e36f837ecdad98b9ecd4de5b71a2099b0073 12625ba491933dbcc6783dc33136bf3e77686e5b filiperobotic <filipe.rolim@gmail.com> 1770218688 -0300	commit: dsfdsfds
