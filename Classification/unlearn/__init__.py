@@ -1,6 +1,7 @@
 from .GA import GA,GA_l1
 from .RL import RL
 from .RL_wl import RL_wl
+from .RL_entropy import RL_entropy
 from .FT import FT,FT_l1
 from .fisher import fisher,fisher_new
 from .retrain import retrain
@@ -30,6 +31,8 @@ def get_unlearn_method(name):
         return RL
     elif name == "RL_wl":
         return RL_wl
+    elif name == "RL_entropy":
+        return RL_entropy
     elif name == "GA":
         return GA
     elif name == "FT":
