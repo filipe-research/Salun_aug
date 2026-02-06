@@ -1557,7 +1557,7 @@ def pneumonia_dataloaders(
             #test_set.data = test_set.data[test_set.targets != class_to_replace]
             
             test_set.imgs = test_set.imgs[test_set.labels != class_to_replace]
-            test_set.original_labels = test_set.original_labels[test_set.labels != class_to_replace]
+            # test_set.original_labels = test_set.original_labels[test_set.labels != class_to_replace]
             test_set.labels = test_set.labels[test_set.labels != class_to_replace]
     if indexes_to_replace is not None:
         replace_indexes(
