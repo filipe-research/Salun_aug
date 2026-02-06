@@ -59,7 +59,7 @@ def RL_wl(data_loaders, model, criterion, optimizer, epoch, args, mask=None):
     #if args.dataset == "cifar100" or args.dataset == "TinyImagenet":
     if args.dataset == "cifar100" or args.dataset == "TinyImagenet" or args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist"]:
         
-        if args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin"]:
+        if args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist"]:
             forget_dataset.targets = np.random.randint(0, args.num_classes, forget_dataset.labels.shape)
         else:
         
