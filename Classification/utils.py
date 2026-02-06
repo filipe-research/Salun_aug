@@ -194,31 +194,52 @@ def setup_model_dataset(args):
         model.normalize = normalization
         return model, train_full_loader, val_loader, test_loader, marked_loader
 
-    elif args.dataset == "dermamnist_bin":
+    elif args.dataset in ["dermamnist_bin", "pneumoniamnist"]:
         classes = 2
             
         normalization = NormalizeByChannelMeanStd(
             mean=[0.4914, 0.4822, 0.4465], std=[0.2470, 0.2435, 0.2616]
         )
-        train_full_loader, val_loader, _ = dermamnist_bin_dataloaders(
-            batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers, no_aug=args.no_aug, aug_mode=args.aug_mode, dataset=args.dataset
-        )
-        marked_loader, _, test_loader = dermamnist_bin_dataloaders(
-            batch_size=args.batch_size,
-            data_dir=args.data,
-            num_workers=args.workers,
-            class_to_replace=args.class_to_replace,
-            num_indexes_to_replace=args.num_indexes_to_replace,
-            indexes_to_replace=args.indexes_to_replace,
-            seed=args.seed,
-            only_mark=True,
-            shuffle=True,
-            no_aug=args.no_aug,
-            aug_mode=args.aug_mode,
-            dataset=args.dataset,
-            removal_mode=args.removal_mode,
-            skew_malignant_frac= args.skew_malignant_frac,
-        )
+        if args.dataset == "dermamnist_bin":
+            train_full_loader, val_loader, _ = dermamnist_bin_dataloaders(
+                batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers, no_aug=args.no_aug, aug_mode=args.aug_mode, dataset=args.dataset
+            )
+            marked_loader, _, test_loader = dermamnist_bin_dataloaders(
+                batch_size=args.batch_size,
+                data_dir=args.data,
+                num_workers=args.workers,
+                class_to_replace=args.class_to_replace,
+                num_indexes_to_replace=args.num_indexes_to_replace,
+                indexes_to_replace=args.indexes_to_replace,
+                seed=args.seed,
+                only_mark=True,
+                shuffle=True,
+                no_aug=args.no_aug,
+                aug_mode=args.aug_mode,
+                dataset=args.dataset,
+                removal_mode=args.removal_mode,
+                skew_malignant_frac= args.skew_malignant_frac,
+            )
+        elif args.dataset == "pneumoniamnist":
+            train_full_loader, val_loader, _ = pneumonia_dataloaders(
+                batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers, no_aug=args.no_aug, aug_mode=args.aug_mode, dataset=args.dataset
+            )
+            marked_loader, _, test_loader = pneumonia_dataloaders(
+                batch_size=args.batch_size,
+                data_dir=args.data,
+                num_workers=args.workers,
+                class_to_replace=args.class_to_replace,
+                num_indexes_to_replace=args.num_indexes_to_replace,
+                indexes_to_replace=args.indexes_to_replace,
+                seed=args.seed,
+                only_mark=True,
+                shuffle=True,
+                no_aug=args.no_aug,
+                aug_mode=args.aug_mode,
+                dataset=args.dataset,
+                removal_mode=args.removal_mode,
+                skew_malignant_frac= args.skew_malignant_frac,
+            )
 
         if args.train_seed is None:
             args.train_seed = args.seed
@@ -233,6 +254,8 @@ def setup_model_dataset(args):
 
         model.normalize = normalization
         return model, train_full_loader, val_loader, test_loader, marked_loader
+      
+
     elif args.dataset == "svhn":
         classes = 10
         normalization = NormalizeByChannelMeanStd(
