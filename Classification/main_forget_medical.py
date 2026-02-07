@@ -74,7 +74,7 @@ def main():
         assert len(forget_dataset) + len(retain_dataset) == len(
             train_loader_full.dataset
         )
-    elif args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist"]:
+    elif args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist"]:
         
         marked = forget_dataset.labels < 0
         forget_dataset.imgs = forget_dataset.imgs[marked]

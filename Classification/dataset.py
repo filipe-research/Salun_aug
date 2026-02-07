@@ -18,7 +18,7 @@ from torchvision.datasets import CIFAR10, CIFAR100, SVHN, ImageFolder
 from torchvision.transforms import AutoAugment, AutoAugmentPolicy
 from torchvision.transforms import TrivialAugmentWide
 from tqdm import tqdm
-from medmnist import BloodMNIST, PathMNIST, OrganAMNIST, OCTMNIST, DermaMNIST, PneumoniaMNIST
+from medmnist import BloodMNIST, PathMNIST, OrganAMNIST, OCTMNIST, DermaMNIST, PneumoniaMNIST, BreastMNIST
 
 def _get_label_array(dataset: torch.utils.data.Dataset):
     """Return the label array reference and a string key indicating where labels live."""
@@ -1596,6 +1596,251 @@ def pneumonia_dataloaders(
 
     return train_loader, val_loader, test_loader
 
+def breastmnist_dataloaders(
+    batch_size=128,
+    #data_dir="datasets/medmnist",
+    data_dir="/home/pesquisador/pesquisa/datasets",
+    num_workers=2,
+    random_to_replace: int = None,
+    class_to_replace: int = None,
+    num_indexes_to_replace=None,
+    indexes_to_replace=None,
+    seed: int = 1,
+    only_mark: bool = False,
+    shuffle=True,
+    no_aug=False,
+    aug_mode=None,
+    im_size=64,
+    dataset=None,
+    removal_mode: str = "random",  # random | balanced | skewed
+    skew_malignant_frac: float = 0.7,
+):
+    if no_aug:
+        train_transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+            ]
+        )
+    else:
+        if aug_mode == "crop-flip" or aug_mode==None:
+            train_transform = transforms.Compose(
+                [
+                    transforms.RandomCrop(im_size, padding=4),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                ]
+            )
+        elif aug_mode == "crop-flip-randaug":
+            rand_augment = transforms.RandAugment(num_ops=2, magnitude=9)
+            train_transform = transforms.Compose(
+                [
+                    transforms.RandomCrop(im_size, padding=4),
+                    transforms.RandomHorizontalFlip(),
+                    rand_augment,
+                    transforms.ToTensor(),
+                ]
+            )
+        elif aug_mode == "crop-flip-autoaug":
+            auto_augment = AutoAugment(policy=AutoAugmentPolicy.CIFAR10)
+            train_transform = transforms.Compose(
+                [
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.RandomHorizontalFlip(),
+                    auto_augment, 
+                    transforms.ToTensor(),
+                ]
+            )
+        elif aug_mode == "crop-flip-rerase":
+            random_erasing = transforms.RandomErasing(
+                p=0.5,             # Probability of applying Random Erasing
+                scale=(0.02, 0.33), # Range of proportion of erased area relative to image
+                ratio=(0.3, 3.3),  # Aspect ratio of erased area
+                value=0,           # Value to fill the erased area (e.g., 0 for black)
+                inplace=False      # Whether to modify the image in-place
+            )
+            train_transform = transforms.Compose(
+                [
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    random_erasing
+                ])
+        elif aug_mode == "crop-flip-trivial":
+            trivial_augment = TrivialAugmentWide()
+            train_transform = transforms.Compose(
+                [
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.RandomHorizontalFlip(),
+                    trivial_augment,  
+                    transforms.ToTensor(),
+                    
+                ])
+        elif aug_mode == "crop-flip-augmix":
+            
+            train_transform = transforms.Compose(
+                [
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.AugMix(),  
+                    transforms.ToTensor(),
+                    
+                ])
+        else:
+            print("Invalid Augmentation")
+            print(aug_mode)
+
+    test_transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+        ]
+    )
+
+
+    
+    train_set = BreastMNIST( split='train',  root=data_dir,download=True, size=im_size, transform=train_transform)
+
+    valid_set = BreastMNIST( split='val',  root=data_dir,download=True, size=im_size, transform=train_transform)
+
+    test_set = BreastMNIST( split='test',  root=data_dir, transform=test_transform, download=True,  size=im_size)
+    
+   
+
+    
+
+    #train_set.targets = np.array(train_set.targets)
+    train_set.labels = np.array(train_set.labels).squeeze()
+    train_set.labels = train_set.labels.astype('int32')
+    #test_set.targets = np.array(test_set.targets)
+    test_set.labels = np.array(test_set.labels).squeeze()
+    test_set.labels = test_set.labels.astype('int32')
+
+    valid_set.labels = np.array(valid_set.labels).squeeze()
+    valid_set.labels = valid_set.labels.astype('int32')
+
+    # train_set.original_labels = train_set.labels.copy()
+    # valid_set.original_labels = valid_set.labels.copy()
+    # test_set.original_labels = test_set.labels.copy()
+
+    # train_set.labels =  np.isin(train_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+    # valid_set.labels =  np.isin(valid_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+    # test_set.labels =  np.isin(test_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+
+    # Log class distribution
+    print("=" * 50)
+    print("BreastMNIST Binary - Class Distribution")
+    print("=" * 50)
+    for name, ds in [("Train", train_set), ("Val", valid_set), ("Test", test_set)]:
+        n_malignant = (ds.labels == 1).sum()
+        n_benign = (ds.labels == 0).sum()
+        total = len(ds.labels)
+        print(f"  {name}: Malignant={n_malignant} ({100*n_malignant/total:.1f}%) | "
+              f"Benign={n_benign} ({100*n_benign/total:.1f}%) | Total={total}")
+    print("=" * 50)
+
+
+    # rng = np.random.RandomState(seed)
+    # valid_set = copy.deepcopy(train_set)
+    # valid_idx = []
+    # for i in range(max(train_set.targets) + 1):
+    #     class_idx = np.where(train_set.targets == i)[0]
+    #     valid_idx.append(
+    #         rng.choice(class_idx, int(0.1 * len(class_idx)), replace=False)
+    #     )
+    # valid_idx = np.hstack(valid_idx)
+    # train_set_copy = copy.deepcopy(train_set)
+
+    # valid_set.data = train_set_copy.data[valid_idx]
+    # valid_set.targets = train_set_copy.targets[valid_idx]
+    
+
+    # train_idx = list(set(range(len(train_set))) - set(valid_idx))
+
+    # train_set.data = train_set_copy.data[train_idx]
+    # train_set.targets = train_set_copy.targets[train_idx]
+
+    if class_to_replace is not None and indexes_to_replace is not None:
+        raise ValueError(
+            "Only one of `class_to_replace` and `indexes_to_replace` can be specified"
+        )
+    
+    if class_to_replace is not None:
+        
+        # replace_class(
+        #     train_set,
+        #     class_to_replace,
+        #     num_indexes_to_replace=num_indexes_to_replace,
+        #     seed=seed - 1,
+        #     only_mark=only_mark,
+        # )
+        # For MU experiments we typically mark samples (only_mark=True) instead of replacing.
+        # When class_to_replace == -1, the original code marks a random subset of the whole train set.
+        # Here we support class-balanced and skewed removal policies for the binary task.
+        if class_to_replace == -1 and only_mark and num_indexes_to_replace is not None:
+            labels_arr = np.array(train_set.labels).astype(np.int64)
+            idx_to_mark = select_removal_indexes_binary(
+                labels=labels_arr,
+                total_to_remove=int(num_indexes_to_replace),
+                mode=str(removal_mode),
+                skew_malignant_frac=float(skew_malignant_frac),
+                seed=int(seed - 1),
+            )
+            print(
+                f"[Removal] mode={removal_mode} total={len(idx_to_mark)} "
+                f"(mal={int((labels_arr[idx_to_mark]==1).sum())}, ben={int((labels_arr[idx_to_mark]==0).sum())})"
+            )
+            mark_indexes_only(train_set, idx_to_mark)
+        else:
+            # Fallback to original behavior (replace or mark a specific class)
+            replace_class(
+                train_set,
+                class_to_replace,
+                num_indexes_to_replace=num_indexes_to_replace,
+                seed=seed - 1,
+                only_mark=only_mark,
+            )
+        #if num_indexes_to_replace is None or num_indexes_to_replace == 4500:
+        if num_indexes_to_replace is None :
+            #test_set.data = test_set.data[test_set.targets != class_to_replace]
+            
+            test_set.imgs = test_set.imgs[test_set.labels != class_to_replace]
+            # test_set.original_labels = test_set.original_labels[test_set.labels != class_to_replace]
+            test_set.labels = test_set.labels[test_set.labels != class_to_replace]
+    if indexes_to_replace is not None:
+        replace_indexes(
+            dataset=train_set,
+            indexes=indexes_to_replace,
+            seed=seed - 1,
+            only_mark=only_mark,
+        )
+
+    loader_args = {"num_workers": 0, "pin_memory": False}
+
+    def _init_fn(worker_id):
+        np.random.seed(int(seed))
+
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+    val_loader = DataLoader(
+        valid_set,
+        batch_size=batch_size,
+        shuffle=False,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+    test_loader = DataLoader(
+        test_set,
+        batch_size=batch_size,
+        shuffle=False,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+
+    return train_loader, val_loader, test_loader
 
 def replace_indexes(
     dataset: torch.utils.data.Dataset, indexes, seed=0, only_mark: bool = False
