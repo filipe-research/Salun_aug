@@ -113,6 +113,7 @@ def FT_iter(
                 start = time.time()
     else:
 
+        device = torch.device("cuda")
         # infer from retain distribution (do not use forget, since it may have randomized labels)
         cw = _infer_class_weights_from_dataset(train_loader.dataset, device)
         if cw is not None:
