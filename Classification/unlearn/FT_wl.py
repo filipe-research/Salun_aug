@@ -180,7 +180,7 @@ def FT_iter(
 
 
 @iterative_unlearn
-def FT(data_loaders, model, criterion, optimizer, epoch, args, mask=None):
+def FT_wl(data_loaders, model, criterion, optimizer, epoch, args, mask=None):
     return FT_iter(data_loaders, model, criterion, optimizer, epoch, args, mask)
 
 
