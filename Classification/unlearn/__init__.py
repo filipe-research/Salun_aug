@@ -4,6 +4,7 @@ from .RL_wl import RL_wl
 from .RL_entropy import RL_entropy
 from .RL_hibrid import RL_hibrid
 from .FT import FT,FT_l1
+from .FT_wl import FT_wl
 from .fisher import fisher,fisher_new
 from .retrain import retrain
 from .impl import load_unlearn_checkpoint, save_unlearn_checkpoint
@@ -40,6 +41,8 @@ def get_unlearn_method(name):
         return GA
     elif name == "FT":
         return FT
+    elif name == "FT_wl":
+        return FT_wl
     elif name == "FT_l1":
         return FT_l1
     elif name == "fisher":
