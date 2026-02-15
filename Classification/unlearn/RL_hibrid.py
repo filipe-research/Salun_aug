@@ -102,14 +102,14 @@ def RL_hibrid(data_loaders, model, criterion, optimizer, epoch, args, mask=None)
     if cw is not None:
         print(f"[HybridSalUn] CE weights: {cw.detach().cpu().tolist()}")
     
-    if args.dataset == "cifar100" or args.dataset == "TinyImagenet" or args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist"]:
+    if args.dataset == "cifar100" or args.dataset == "TinyImagenet" or args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist", "pathmnist_bin", "bloodmnist_bin"]:
         
         # ============================================================
         # MODIFICAÇÃO PRINCIPAL: Tratamento assimétrico por classe
         # ============================================================
         
         # Obter labels originais ANTES de qualquer modificação
-        if args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist"]:
+        if args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist",  "pathmnist_bin", "bloodmnist_bin"]:
             original_labels = _get_original_labels(forget_dataset)
             
             # Criar máscara: True para malignos (classe 1), False para benignos (classe 0)

@@ -19,6 +19,7 @@ from torchvision.transforms import AutoAugment, AutoAugmentPolicy
 from torchvision.transforms import TrivialAugmentWide
 from tqdm import tqdm
 from medmnist import BloodMNIST, PathMNIST, OrganAMNIST, OCTMNIST, DermaMNIST, PneumoniaMNIST, BreastMNIST
+from medmnist import PathMNIST, BloodMNIST
 
 def _get_label_array(dataset: torch.utils.data.Dataset):
     """Return the label array reference and a string key indicating where labels live."""
@@ -1349,6 +1350,414 @@ def dermamnist_bin_dataloaders(
     )
 
     return train_loader, val_loader, test_loader
+
+# =============================================================================
+# PathMNIST Binarizado
+# =============================================================================
+
+def pathmnist_bin_dataloaders(
+    batch_size=128,
+    data_dir="/home/pesquisador/pesquisa/datasets",
+    num_workers=2,
+    random_to_replace: int = None,
+    class_to_replace: int = None,
+    num_indexes_to_replace=None,
+    indexes_to_replace=None,
+    seed: int = 1,
+    only_mark: bool = False,
+    shuffle=True,
+    no_aug=False,
+    aug_mode=None,
+    im_size=64,
+    dataset=None,
+    removal_mode: str = "random",  # random | balanced | skewed
+    skew_malignant_frac: float = 0.7,
+):
+    """
+    PathMNIST binarizado para classificação de câncer colorectal.
+    
+    Binarização:
+    - Maligno (1): Cancer-associated stroma (7) + Colorectal adenocarcinoma (8)
+    - Benigno (0): Todas as outras classes (0, 1, 2, 3, 4, 5, 6)
+    
+    Dataset grande (89,996 train) com distribuição esperada de ~10-15% malignos.
+    """
+    
+    # Classes malignas (tumor/câncer)
+    MALIGNANT_CLASSES = [7, 8]  # Cancer-associated stroma + Colorectal adenocarcinoma
+    # Classes benignas (tecido normal/não-canceroso)
+    BENIGN_CLASSES = [0, 1, 2, 3, 4, 5, 6]
+    
+    # Data augmentation
+    if no_aug:
+        train_transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+    else:
+        if aug_mode == "crop-flip" or aug_mode is None:
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-randaug":
+            rand_augment = transforms.RandAugment(num_ops=2, magnitude=9)
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                rand_augment,
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-autoaug":
+            auto_augment = AutoAugment(policy=AutoAugmentPolicy.CIFAR10)
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                auto_augment,
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-rerase":
+            random_erasing = transforms.RandomErasing(
+                p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False
+            )
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                random_erasing
+            ])
+        elif aug_mode == "crop-flip-trivial":
+            trivial_augment = TrivialAugmentWide()
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                trivial_augment,
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-augmix":
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.AugMix(),
+                transforms.ToTensor(),
+            ])
+        else:
+            print("Invalid Augmentation")
+            print(aug_mode)
+
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+
+    # Carregar datasets
+    train_set = PathMNIST(split='train', root=data_dir, download=True, size=im_size, transform=train_transform)
+    valid_set = PathMNIST(split='val', root=data_dir, download=True, size=im_size, transform=train_transform)
+    test_set = PathMNIST(split='test', root=data_dir, transform=test_transform, download=True, size=im_size)
+
+    # Converter labels para numpy
+    train_set.labels = np.array(train_set.labels).squeeze().astype('int32')
+    test_set.labels = np.array(test_set.labels).squeeze().astype('int32')
+    valid_set.labels = np.array(valid_set.labels).squeeze().astype('int32')
+
+    # Guardar labels originais
+    train_set.original_labels = train_set.labels.copy()
+    valid_set.original_labels = valid_set.labels.copy()
+    test_set.original_labels = test_set.labels.copy()
+
+    # Binarizar: Maligno = 1, Benigno = 0
+    train_set.labels = np.isin(train_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+    valid_set.labels = np.isin(valid_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+    test_set.labels = np.isin(test_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+
+    # Log class distribution
+    print("=" * 50)
+    print("PathMNIST Binary - Class Distribution")
+    print("Classes malignas:", MALIGNANT_CLASSES)
+    print("Classes benignas:", BENIGN_CLASSES)
+    print("=" * 50)
+    for name, ds in [("Train", train_set), ("Val", valid_set), ("Test", test_set)]:
+        n_malignant = (ds.labels == 1).sum()
+        n_benign = (ds.labels == 0).sum()
+        total = len(ds.labels)
+        print(f"  {name}: Malignant={n_malignant} ({100*n_malignant/total:.1f}%) | "
+              f"Benign={n_benign} ({100*n_benign/total:.1f}%) | Total={total}")
+    print("=" * 50)
+
+    # Lógica de remoção de amostras (para machine unlearning)
+    if class_to_replace is not None and indexes_to_replace is not None:
+        raise ValueError(
+            "Only one of `class_to_replace` and `indexes_to_replace` can be specified"
+        )
+
+    if class_to_replace is not None:
+        if class_to_replace == -1 and only_mark and num_indexes_to_replace is not None:
+            labels_arr = np.array(train_set.labels).astype(np.int64)
+            idx_to_mark = select_removal_indexes_binary(
+                labels=labels_arr,
+                total_to_remove=int(num_indexes_to_replace),
+                mode=str(removal_mode),
+                skew_malignant_frac=float(skew_malignant_frac),
+                seed=int(seed - 1),
+            )
+            print(
+                f"[Removal] mode={removal_mode} total={len(idx_to_mark)} "
+                f"(mal={int((labels_arr[idx_to_mark]==1).sum())}, ben={int((labels_arr[idx_to_mark]==0).sum())})"
+            )
+            mark_indexes_only(train_set, idx_to_mark)
+        else:
+            replace_class(
+                train_set,
+                class_to_replace,
+                num_indexes_to_replace=num_indexes_to_replace,
+                seed=seed - 1,
+                only_mark=only_mark,
+            )
+        if num_indexes_to_replace is None:
+            test_set.imgs = test_set.imgs[test_set.labels != class_to_replace]
+            test_set.original_labels = test_set.original_labels[test_set.labels != class_to_replace]
+            test_set.labels = test_set.labels[test_set.labels != class_to_replace]
+
+    if indexes_to_replace is not None:
+        replace_indexes(
+            dataset=train_set,
+            indexes=indexes_to_replace,
+            seed=seed - 1,
+            only_mark=only_mark,
+        )
+
+    loader_args = {"num_workers": 0, "pin_memory": False}
+
+    def _init_fn(worker_id):
+        np.random.seed(int(seed))
+
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+    val_loader = DataLoader(
+        valid_set,
+        batch_size=batch_size,
+        shuffle=False,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+    test_loader = DataLoader(
+        test_set,
+        batch_size=batch_size,
+        shuffle=False,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+
+    return train_loader, val_loader, test_loader
+
+# =============================================================================
+# BloodMNIST Binarizado
+# =============================================================================
+
+def bloodmnist_bin_dataloaders(
+    batch_size=128,
+    data_dir="/home/pesquisador/pesquisa/datasets",
+    num_workers=2,
+    random_to_replace: int = None,
+    class_to_replace: int = None,
+    num_indexes_to_replace=None,
+    indexes_to_replace=None,
+    seed: int = 1,
+    only_mark: bool = False,
+    shuffle=True,
+    no_aug=False,
+    aug_mode=None,
+    im_size=64,
+    dataset=None,
+    removal_mode: str = "random",  # random | balanced | skewed
+    skew_malignant_frac: float = 0.7,
+):
+    """
+    BloodMNIST binarizado para detecção de células sanguíneas anormais.
+    
+    Binarização:
+    - Anormal/Maligno (1): Erythroblast (2) + Immature granulocyte (3)
+      (células imaturas que podem indicar leucemia ou outras condições)
+    - Normal/Benigno (0): Todas as outras classes (0, 1, 4, 5, 6, 7)
+    
+    Dataset médio (11,959 train) com distribuição esperada de ~15-20% anormais.
+    """
+    
+    # Classes anormais (células imaturas - podem indicar doença)
+    MALIGNANT_CLASSES = [2, 3]  # Erythroblast + Immature granulocyte
+    # Classes normais (células maduras saudáveis)
+    BENIGN_CLASSES = [0, 1, 4, 5, 6, 7]  # basophil, eosinophil, lymphocyte, monocyte, neutrophil, platelet
+    
+    # Data augmentation
+    if no_aug:
+        train_transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+    else:
+        if aug_mode == "crop-flip" or aug_mode is None:
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-randaug":
+            rand_augment = transforms.RandAugment(num_ops=2, magnitude=9)
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                rand_augment,
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-autoaug":
+            auto_augment = AutoAugment(policy=AutoAugmentPolicy.CIFAR10)
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                auto_augment,
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-rerase":
+            random_erasing = transforms.RandomErasing(
+                p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False
+            )
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                random_erasing
+            ])
+        elif aug_mode == "crop-flip-trivial":
+            trivial_augment = TrivialAugmentWide()
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                trivial_augment,
+                transforms.ToTensor(),
+            ])
+        elif aug_mode == "crop-flip-augmix":
+            train_transform = transforms.Compose([
+                transforms.RandomCrop(im_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.AugMix(),
+                transforms.ToTensor(),
+            ])
+        else:
+            print("Invalid Augmentation")
+            print(aug_mode)
+
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+
+    # Carregar datasets
+    train_set = BloodMNIST(split='train', root=data_dir, download=True, size=im_size, transform=train_transform)
+    valid_set = BloodMNIST(split='val', root=data_dir, download=True, size=im_size, transform=train_transform)
+    test_set = BloodMNIST(split='test', root=data_dir, transform=test_transform, download=True, size=im_size)
+
+    # Converter labels para numpy
+    train_set.labels = np.array(train_set.labels).squeeze().astype('int32')
+    test_set.labels = np.array(test_set.labels).squeeze().astype('int32')
+    valid_set.labels = np.array(valid_set.labels).squeeze().astype('int32')
+
+    # Guardar labels originais
+    train_set.original_labels = train_set.labels.copy()
+    valid_set.original_labels = valid_set.labels.copy()
+    test_set.original_labels = test_set.labels.copy()
+
+    # Binarizar: Anormal = 1, Normal = 0
+    train_set.labels = np.isin(train_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+    valid_set.labels = np.isin(valid_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+    test_set.labels = np.isin(test_set.labels, MALIGNANT_CLASSES).astype(np.int32)
+
+    # Log class distribution
+    print("=" * 50)
+    print("BloodMNIST Binary - Class Distribution")
+    print("Classes anormais (malignas):", MALIGNANT_CLASSES)
+    print("Classes normais (benignas):", BENIGN_CLASSES)
+    print("=" * 50)
+    for name, ds in [("Train", train_set), ("Val", valid_set), ("Test", test_set)]:
+        n_malignant = (ds.labels == 1).sum()
+        n_benign = (ds.labels == 0).sum()
+        total = len(ds.labels)
+        print(f"  {name}: Malignant={n_malignant} ({100*n_malignant/total:.1f}%) | "
+              f"Benign={n_benign} ({100*n_benign/total:.1f}%) | Total={total}")
+    print("=" * 50)
+
+    # Lógica de remoção de amostras (para machine unlearning)
+    if class_to_replace is not None and indexes_to_replace is not None:
+        raise ValueError(
+            "Only one of `class_to_replace` and `indexes_to_replace` can be specified"
+        )
+
+    if class_to_replace is not None:
+        if class_to_replace == -1 and only_mark and num_indexes_to_replace is not None:
+            labels_arr = np.array(train_set.labels).astype(np.int64)
+            idx_to_mark = select_removal_indexes_binary(
+                labels=labels_arr,
+                total_to_remove=int(num_indexes_to_replace),
+                mode=str(removal_mode),
+                skew_malignant_frac=float(skew_malignant_frac),
+                seed=int(seed - 1),
+            )
+            print(
+                f"[Removal] mode={removal_mode} total={len(idx_to_mark)} "
+                f"(mal={int((labels_arr[idx_to_mark]==1).sum())}, ben={int((labels_arr[idx_to_mark]==0).sum())})"
+            )
+            mark_indexes_only(train_set, idx_to_mark)
+        else:
+            replace_class(
+                train_set,
+                class_to_replace,
+                num_indexes_to_replace=num_indexes_to_replace,
+                seed=seed - 1,
+                only_mark=only_mark,
+            )
+        if num_indexes_to_replace is None:
+            test_set.imgs = test_set.imgs[test_set.labels != class_to_replace]
+            test_set.original_labels = test_set.original_labels[test_set.labels != class_to_replace]
+            test_set.labels = test_set.labels[test_set.labels != class_to_replace]
+
+    if indexes_to_replace is not None:
+        replace_indexes(
+            dataset=train_set,
+            indexes=indexes_to_replace,
+            seed=seed - 1,
+            only_mark=only_mark,
+        )
+
+    loader_args = {"num_workers": 0, "pin_memory": False}
+
+    def _init_fn(worker_id):
+        np.random.seed(int(seed))
+
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+    val_loader = DataLoader(
+        valid_set,
+        batch_size=batch_size,
+        shuffle=False,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+    test_loader = DataLoader(
+        test_set,
+        batch_size=batch_size,
+        shuffle=False,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+
+    return train_loader, val_loader, test_loader
+
 
 def pneumonia_dataloaders(
     batch_size=128,

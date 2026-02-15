@@ -194,7 +194,7 @@ def setup_model_dataset(args):
         model.normalize = normalization
         return model, train_full_loader, val_loader, test_loader, marked_loader
 
-    elif args.dataset in ["dermamnist_bin", "pneumoniamnist", "breastmnist"]:
+    elif args.dataset in ["dermamnist_bin", "pneumoniamnist", "breastmnist", "pathmnist_bin", "bloodmnist_bin"]:
         classes = 2
             
         normalization = NormalizeByChannelMeanStd(
@@ -205,6 +205,46 @@ def setup_model_dataset(args):
                 batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers, no_aug=args.no_aug, aug_mode=args.aug_mode, dataset=args.dataset
             )
             marked_loader, _, test_loader = dermamnist_bin_dataloaders(
+                batch_size=args.batch_size,
+                data_dir=args.data,
+                num_workers=args.workers,
+                class_to_replace=args.class_to_replace,
+                num_indexes_to_replace=args.num_indexes_to_replace,
+                indexes_to_replace=args.indexes_to_replace,
+                seed=args.seed,
+                only_mark=True,
+                shuffle=True,
+                no_aug=args.no_aug,
+                aug_mode=args.aug_mode,
+                dataset=args.dataset,
+                removal_mode=args.removal_mode,
+                skew_malignant_frac= args.skew_malignant_frac,
+            )
+        elif args.dataset == "pathmnist_bin":
+            train_full_loader, val_loader, _ = pathmnist_bin_dataloaders(
+                batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers, no_aug=args.no_aug, aug_mode=args.aug_mode, dataset=args.dataset
+            )
+            marked_loader, _, test_loader = pathmnist_bin_dataloaders(
+                batch_size=args.batch_size,
+                data_dir=args.data,
+                num_workers=args.workers,
+                class_to_replace=args.class_to_replace,
+                num_indexes_to_replace=args.num_indexes_to_replace,
+                indexes_to_replace=args.indexes_to_replace,
+                seed=args.seed,
+                only_mark=True,
+                shuffle=True,
+                no_aug=args.no_aug,
+                aug_mode=args.aug_mode,
+                dataset=args.dataset,
+                removal_mode=args.removal_mode,
+                skew_malignant_frac= args.skew_malignant_frac,
+            )  
+        elif args.dataset == "bloodmnist_bin":
+            train_full_loader, val_loader, _ = bloodmnist_bin_dataloaders(
+                batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers, no_aug=args.no_aug, aug_mode=args.aug_mode, dataset=args.dataset
+            )
+            marked_loader, _, test_loader = bloodmnist_bin_dataloaders(
                 batch_size=args.batch_size,
                 data_dir=args.data,
                 num_workers=args.workers,

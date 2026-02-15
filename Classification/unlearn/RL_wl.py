@@ -57,9 +57,9 @@ def RL_wl(data_loaders, model, criterion, optimizer, epoch, args, mask=None):
         print(f"[AutoClassWeights][RL] Using inferred CE weights: {cw.detach().cpu().tolist()}")
     
     #if args.dataset == "cifar100" or args.dataset == "TinyImagenet":
-    if args.dataset == "cifar100" or args.dataset == "TinyImagenet" or args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist"]:
+    if args.dataset == "cifar100" or args.dataset == "TinyImagenet" or args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist",  "pathmnist_bin", "bloodmnist_bin"]:
         
-        if args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist"]:
+        if args.dataset in ["bloodmnist", "pathmnist", "organamnist", "octmnist", "dermamnist_bin", "pneumoniamnist", "breastmnist",  "pathmnist_bin", "bloodmnist_bin"]:
             forget_dataset.targets = np.random.randint(0, args.num_classes, forget_dataset.labels.shape)
         else:
         
