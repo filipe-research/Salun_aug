@@ -36,7 +36,8 @@ def get_unlearn_method(name):
     elif name == "RL_entropy":
         return RL_entropy
     elif name == "RL_hibrid":
-        return RL_entropy
+        # return RL_entropy
+        return RL_hibrid
     elif name == "GA":
         return GA
     elif name == "FT":
